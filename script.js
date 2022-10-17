@@ -36,5 +36,27 @@ window.addEventListener("load", function () {
 
   class UI {}
 
-  class Game {}
+  class Game {
+    constructor(width, height) {
+      this.width = width;
+      this.height = height;
+      this.player = new Player(this);
+    }
+    update() {
+      this.player.update();
+    }
+    draw(context) {
+      this.player.draw(context);
+    }
+  }
+
+  const game = new Game(canvas.width, canvas.height);
+  //animation loop
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    game.update();
+    game.draw(ctx);
+    requestAnimationFrame(animate);
+  }
+  animate();
 });
