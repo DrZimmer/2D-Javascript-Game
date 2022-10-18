@@ -18,7 +18,7 @@ window.addEventListener("load", function () {
         console.log(this.game.keys);
       });
       window.addEventListener("keyup", (e) => {
-        if (this.game.keys.indexOf(e.key) === -1) {
+        if (this.game.keys.indexOf(e.key) > -1) {
           this.game.keys.splice(this.game.keys.indexOf(e.key), 1);
         }
         console.log(this.game.keys);
@@ -39,6 +39,9 @@ window.addEventListener("load", function () {
       this.speedY = 0;
     }
     update() {
+      if (this.game.keys.includes("ArrowUp")) this.speedY = -1;
+      else if (this.game.keys.includes("ArrowDown")) this.speedY = 1;
+      else this.speedY = 0;
       this.y += this.speedY;
     }
     draw(context) {
