@@ -63,8 +63,11 @@ window.addEventListener("load", function () {
       this.maxSpeed = 3;
       this.projectiles = [];
       this.image = document.getElementById("player");
+      this.powerUp = false;
+      this.powerUpTimer = 0;
+      this.powerUpLimit = 10000;
     }
-    update() {
+    update(deltaTime) {
       if (this.game.keys.includes("ArrowUp")) this.speedY = -this.maxSpeed;
       else if (this.game.keys.includes("ArrowDown"))
         this.speedY = this.maxSpeed;
@@ -82,6 +85,19 @@ window.addEventListener("load", function () {
         this.frameX++;
       } else {
         this.frameX = 0;
+      }
+      //power up
+
+      if (this.powerUp) {
+        if (this.powerupTimer > this.powerUpLimit) {
+          this.powerUpTimer = 0;
+          this.powerUp = false;
+          this.frameY = 0;
+        } else {
+          this.powerUpTimer += deltaTime;
+          this.frameY = 1;
+          this.game.ammo += 0.1;
+        }
       }
     }
     draw(context) {
@@ -109,6 +125,11 @@ window.addEventListener("load", function () {
         );
         this.game.ammo--;
       }
+    }
+    enterPowerUp() {
+      this.powerUpTimer = 0;
+      this.powerUp = true;
+      this.game.ammo = this.game.maxAmmo;
     }
   }
 
@@ -158,6 +179,7 @@ window.addEventListener("load", function () {
       this.frameY = Math.floor(Math.random() * 3);
       this.lives = 2;
       this.score = this.lives;
+      this.type = "enemy";
     }
   }
 
@@ -171,6 +193,7 @@ window.addEventListener("load", function () {
       this.frameY = Math.floor(Math.random() * 2);
       this.lives = 3;
       this.score = this.lives;
+      this.type = "enemy";
     }
   }
 
@@ -303,7 +326,7 @@ window.addEventListener("load", function () {
       this.score = 0;
       this.winningScore = 10;
       this.gameTime = 0;
-      this.timeLimit = 5000;
+      this.timeLimit = 15000;
       this.speed = 1;
       this.debug = true;
     }
@@ -312,7 +335,7 @@ window.addEventListener("load", function () {
       if (this.gameTime > this.timeLimit) this.gameOver = true;
       this.background.update();
       this.background.layer4.update();
-      this.player.update();
+      this.player.update(deltaTime);
       if (this.ammoTimer > this.ammoInterval) {
         if (this.ammo < this.maxAmmo) this.ammo++;
         this.ammoTimer = 0;
@@ -323,6 +346,8 @@ window.addEventListener("load", function () {
         enemy.update();
         if (this.checkCollision(this.player, enemy)) {
           enemy.markedForDeletion = true;
+          if ((enemy.type = "lucky")) this.player.enterPowerUp();
+          else this.score--;
         }
         this.player.projectiles.forEach((projectile) => {
           if (this.checkCollision(projectile, enemy)) {
