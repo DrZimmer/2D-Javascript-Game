@@ -89,7 +89,7 @@ window.addEventListener("load", function () {
       //power up
 
       if (this.powerUp) {
-        if (this.powerupTimer > this.powerUpLimit) {
+        if (this.powerUpTimer > this.powerUpLimit) {
           this.powerUpTimer = 0;
           this.powerUp = false;
           this.frameY = 0;
@@ -179,7 +179,6 @@ window.addEventListener("load", function () {
       this.frameY = Math.floor(Math.random() * 3);
       this.lives = 2;
       this.score = this.lives;
-      this.type = "enemy";
     }
   }
 
@@ -193,7 +192,6 @@ window.addEventListener("load", function () {
       this.frameY = Math.floor(Math.random() * 2);
       this.lives = 3;
       this.score = this.lives;
-      this.type = "enemy";
     }
   }
 
@@ -346,7 +344,7 @@ window.addEventListener("load", function () {
         enemy.update();
         if (this.checkCollision(this.player, enemy)) {
           enemy.markedForDeletion = true;
-          if ((enemy.type = "lucky")) this.player.enterPowerUp();
+          if (enemy.type == "lucky") this.player.enterPowerUp();
           else this.score--;
         }
         this.player.projectiles.forEach((projectile) => {
