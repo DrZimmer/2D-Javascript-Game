@@ -36,18 +36,66 @@ window.addEventListener("load", function () {
       this.height = 3;
       this.speed = 3;
       this.markedForDeletion = false;
+      this.image = document.getElementById("projectile");
     }
     update() {
       this.x += this.speed;
       if (this.x > this.game.width * 0.8) this.markedForDeletion = true;
     }
     draw(context) {
-      context.fillStyle = "yellow";
-      context.fillRect(this.x, this.y, this.width, this.height);
+      context.drawImage(this.image, this.x, this.y);
     }
   }
 
-  class Particle {}
+  class Particle {
+    constructor(game, x, y) {
+      this.game = game;
+      this.x = x;
+      this.y = y;
+      this.image = document.getElementById("gears");
+      this.frameX = Math.floor(Math.random() * 3);
+      this.frameY = Math.floor(Math.random() * 3);
+      this.spriteSize = 50;
+      this.sizeModifier = (Math.random() * 0.5 + 0.5).toFixed(1);
+      this.size = this.spriteSize * this.sizeModifier;
+      this.speedX = Math.random() * 6 - 3;
+      this.speedY = Math.random() * -15;
+      this.gravity = 0.5;
+      this.markedForDeletion = false;
+      this.angle = 0;
+      this.va = Math.random() * 0.2 - 0.1;
+      this.bounced = 0;
+      this.bottomBounceBoundary = Math.random() * 100 + 60;
+    }
+    update() {
+      this.angle += this.va;
+      this.speedY += this.gravity;
+      this.x -= this.speedX;
+      this.y += this.speedY;
+      if (this.y > this.game.height + this.size || this.x < 0 - this.size)
+        this.markedForDeletion = true;
+      if (
+        this.y > this.game.height - this.bottomBounceBoundary &&
+        this.bounced < 2
+      ) {
+        this.bounced++;
+        this.speedY *= -0.7;
+      }
+    }
+    draw(context) {
+      context.drawImage(
+        this.image,
+        this.frameX * this.spriteSize,
+        this.frameY * this.spriteSize,
+        this.spriteSize,
+        this.spriteSize,
+        this.x,
+        this.y,
+        this.size,
+        this.size
+      );
+    }
+  }
 
   class Player {
     constructor(game) {
@@ -73,6 +121,10 @@ window.addEventListener("load", function () {
         this.speedY = this.maxSpeed;
       else this.speedY = 0;
       this.y += this.speedY;
+      //vertical boundaries
+      if (this.y > this.game.height - this.height * 0.5)
+        this.y = this.game.height - this.height * 0.5;
+      else if (this.y < -this.height * 0.5) this.y = -this.height * 0.5;
       //handle projectiles
       this.projectiles.forEach((projectile) => {
         projectile.update();
@@ -103,6 +155,9 @@ window.addEventListener("load", function () {
     draw(context) {
       if (this.game.debug)
         context.strokeRect(this.x, this.y, this.width, this.height);
+      this.projectiles.forEach((projectile) => {
+        projectile.draw(context);
+      });
       context.drawImage(
         this.image,
         this.frameX * this.width,
@@ -114,9 +169,6 @@ window.addEventListener("load", function () {
         this.width,
         this.height
       );
-      this.projectiles.forEach((projectile) => {
-        projectile.draw(context);
-      });
     }
     shootTop() {
       if (this.game.ammo > 0) {
@@ -124,6 +176,14 @@ window.addEventListener("load", function () {
           new Projectile(this.game, this.x + 80, this.y + 30)
         );
         this.game.ammo--;
+      }
+      if (this.powerUp) this.shootBottom();
+    }
+    shootBottom() {
+      if (this.game.ammo > 0) {
+        this.projectiles.push(
+          new Projectile(this.game, this.x + 80, this.y + 175)
+        );
       }
     }
     enterPowerUp() {
@@ -165,8 +225,10 @@ window.addEventListener("load", function () {
         this.width,
         this.height
       );
-      context.font = "20px helvetica";
-      context.fillText(this.lives, this.x, this.y);
+      if (this.game.debug) {
+        context.font = "20px helvetica";
+        context.fillText(this.lives, this.x, this.y);
+      }
     }
   }
   class Angler1 extends Enemy {
@@ -255,7 +317,7 @@ window.addEventListener("load", function () {
     constructor(game) {
       this.game = game;
       this.fontSize = 25;
-      this.fontFamily = "Helvetica";
+      this.fontFamily = "Bangers";
       this.color = "white";
     }
     draw(context) {
@@ -267,11 +329,6 @@ window.addEventListener("load", function () {
       context.font = this.fontSize + "px " + this.fontFamily;
       //score
       context.fillText("Score: " + this.game.score, 20, 40);
-      //ammo
-      context.fillStyle = this.color;
-      for (let i = 0; i < this.game.ammo; i++) {
-        context.fillRect(20 + 5 * i, 50, 3, 20);
-      }
       //timer
       const formattedTime = (this.game.gameTime * 0.001).toFixed(1);
       context.fillText("Timer: " + formattedTime, 20, 100);
@@ -282,23 +339,28 @@ window.addEventListener("load", function () {
         let message2;
         if (this.game.score > this.game.winningScore) {
           message1 = "You Win!";
-          message2 = "Well done!";
+          message2 = "Hell Yeah!";
         } else {
           message1 = "You lose!";
-          message2 = "Try again next time!";
+          message2 = "Your seahorse is now just trash at the bottom of the sea";
         }
-        context.font = "50px " + this.fontFamily;
+        context.font = "75px " + this.fontFamily;
         context.fillText(
           message1,
           this.game.width * 0.5,
-          this.game.height * 0.5 - 40
+          this.game.height * 0.5 - 20
         );
         context.font = "25px " + this.fontFamily;
         context.fillText(
           message2,
           this.game.width * 0.5,
-          this.game.height * 0.5 + 40
+          this.game.height * 0.5 + 20
         );
+      }
+      //ammo
+      if (this.game.player.powerUp) context.fillStyle = "#ffffbd";
+      for (let i = 0; i < this.game.ammo; i++) {
+        context.fillRect(20 + 5 * i, 50, 3, 20);
       }
       context.restore();
     }
@@ -314,6 +376,7 @@ window.addEventListener("load", function () {
       this.ui = new UI(this);
       this.keys = [];
       this.enemies = [];
+      this.particles = [];
       this.enemyTimer = 0;
       this.enemyInterval = 1000;
       this.ammo = 20;
@@ -340,10 +403,23 @@ window.addEventListener("load", function () {
       } else {
         this.ammoTimer += deltaTime;
       }
+      this.particles.forEach((particle) => particle.update());
+      this.particles = this.particles.filter(
+        (particle) => !particle.markedForDeletion
+      );
       this.enemies.forEach((enemy) => {
         enemy.update();
         if (this.checkCollision(this.player, enemy)) {
           enemy.markedForDeletion = true;
+          for (let i = 0; i < 10; i++) {
+            this.particles.push(
+              new Particle(
+                this,
+                enemy.x + enemy.width * 0.5,
+                enemy.y + enemy.height * 0.5
+              )
+            );
+          }
           if (enemy.type == "lucky") this.player.enterPowerUp();
           else this.score--;
         }
@@ -351,7 +427,23 @@ window.addEventListener("load", function () {
           if (this.checkCollision(projectile, enemy)) {
             enemy.lives--;
             projectile.markedForDeletion = true;
+            this.particles.push(
+              new Particle(
+                this,
+                enemy.x + enemy.width * 0.5,
+                enemy.y + enemy.height * 0.5
+              )
+            );
             if (enemy.lives <= 0) {
+              for (let i = 0; i < 10; i++) {
+                this.particles.push(
+                  new Particle(
+                    this,
+                    enemy.x + enemy.width * 0.5,
+                    enemy.y + enemy.height * 0.5
+                  )
+                );
+              }
               enemy.markedForDeletion = true;
               if (!this.gameOver) this.score += enemy.score;
               if (this.score > this.winningScore) this.gameOver = true;
@@ -371,6 +463,7 @@ window.addEventListener("load", function () {
       this.background.draw(context);
       this.player.draw(context);
       this.ui.draw(context);
+      this.particles.forEach((particle) => particle.draw(context));
       this.enemies.forEach((enemy) => {
         enemy.draw(context);
       });
